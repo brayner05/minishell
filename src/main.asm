@@ -2,10 +2,12 @@
 prompt:         .string "$ "
 input_buffer:   .zero 1024
 exit_keyword:   .string "exit"
+error_msg:      .string ": no script or executable found\n"
 
 .text
 .extern _put_str
 .extern _str_index
+.extern _strip_newline
 .globl _start
 
 _start:
@@ -17,17 +19,35 @@ main_loop:
     cmpq $1, %rax
     je _exit
 
-    # Find command name
     movq $input_buffer, %rdi
-    movq $' ', %rsi
-    call _str_index
+    call _strip_newline
 
-    jmp main_loop
+    call _fork
+    cmpq $0, %rax
+    je child
+    jne main_loop
+
+child:
+    movq $59, %rax
+    movq $input_buffer, %rdi
+    movq %rdi, %rsi
+    movq $0, %rdx
+    syscall
+
+    cmpq $0, %rax
+    jl command_error
+    jge _exit
+
+command_error:
+    movq $input_buffer, %rdi
+    call _put_str
+    movq $error_msg, %rdi
+    call _put_str
 
 _exit:
-    movq $1, %rax
-    xorq %rbx, %rbx
-    int $0x80
+    movq $60, %rax
+    xorq %rdi, %rdi
+    syscall
 
 # Print the prompt to the screen
 _print_prompt:
@@ -37,11 +57,11 @@ _print_prompt:
 
 # Read user input into the input buffer
 _get_input:
-    movq $3, %rax
-    movq $0, %rbx
-    movq $input_buffer, %rcx
+    movq $0, %rax
+    movq $0, %rdi
+    movq $input_buffer, %rsi
     movq $1023, %rdx
-    int $0x80
+    syscall
     ret
 
 # Check if the user has entered the exit keyword
@@ -82,4 +102,9 @@ equal:
 not_equal:
     movq $0, %rax
     popq %rbp
+    ret
+
+_fork:
+    movq $57, %rax
+    syscall
     ret

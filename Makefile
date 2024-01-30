@@ -1,9 +1,9 @@
 
-all: main.o string.o
+all: bin/main.o bin/string.o
 	ld -m elf_x86_64 -o bin/ashell bin/main.o bin/string.o
 
-%.o: src/%.asm
-	as -o bin/$@ $^
+bin/%.o: src/%.asm
+	as -o $@ $^
 
 clean:
-	rm -rf *.o
+	rm -rf bin/*.o

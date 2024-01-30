@@ -1,6 +1,7 @@
 .text
 .globl _put_str
 .globl _str_index
+.globl _strip_newline
 
 # Print a string (passed through %rdi)
 _put_str:
@@ -10,11 +11,11 @@ _put_str:
     jmp L1
 L0:
     # Print current character
-    movq $4, %rax
-    movq $1, %rbx
-    movq -8(%rbp), %rcx
+    movq $1, %rax
+    movq $1, %rdi
+    movq -8(%rbp), %rsi
     movq $1, %rdx
-    int $0x80
+    syscall
 
     # Increment the pointer
     addq $1, -8(%rbp)
@@ -56,5 +57,21 @@ L3:
     ret
 L4:
     movq $-1, %rax
+    popq %rbp
+    ret
+
+_strip_newline:
+    pushq %rbp
+    movq %rsp, %rbp
+    movq %rdi, -8(%rbp)
+    jmp L6
+L5:
+    addq $1, -8(%rbp)
+L6:
+    movq -8(%rbp), %rax
+    movb (%rax), %al
+    cmpb $'\n', %al
+    jne L5
+    movq $0, -8(%rbp)
     popq %rbp
     ret
