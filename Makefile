@@ -1,6 +1,6 @@
 
-all: bin/main.o bin/string.o
-	ld -m elf_x86_64 -o bin/ashell bin/main.o bin/string.o
+all: bin/main.o bin/string.o bin/io.o
+	ld -m elf_x86_64 -o bin/ashell bin/*.o
 
 bin/%.o: src/%.asm
 	as -o $@ $^

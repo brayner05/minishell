@@ -1,30 +1,7 @@
 .text
-.globl _put_str
 .globl _str_index
 .globl _strip_newline
-
-# Print a string (passed through %rdi)
-_put_str:
-    pushq %rbp
-    movq %rsp, %rbp
-    movq %rdi, -8(%rbp)
-    jmp L1
-L0:
-    # Print current character
-    movq $1, %rax
-    movq $1, %rdi
-    movq -8(%rbp), %rsi
-    movq $1, %rdx
-    syscall
-
-    # Increment the pointer
-    addq $1, -8(%rbp)
-L1:
-    movq -8(%rbp), %rbx
-    cmpb $0, (%rbx)
-    jne L0
-    popq %rbp
-    ret
+.globl _str_eq
 
 # Find the first index of a character in a string
 _str_index:
@@ -74,4 +51,36 @@ L6:
     jne L5
     movq $0, -8(%rbp)
     popq %rbp
+    ret
+
+
+# Compares two strings (rdi, rsi)
+_str_eq:
+LSTREQ1:
+    # Check if str1[i] == '\0'
+    cmpb $0, (%rdi)
+    je LSTREQF
+
+    # Check if str2[i] == '\0'
+    cmpb $0, (%rsi)
+    je LSTREQF
+
+    # Check if str1[i] == str2[i]
+    movb (%rdi), %al
+    cmpb %al, (%rsi)
+    jne LSTREQF
+
+    addq $1, %rdi
+    addq $1, %rsi
+    jmp LSTREQ1
+
+LSTREQF:
+    movb (%rdi), %al
+    cmpb %al, (%rsi)
+    je LSTREQS
+    xorq %rax, %rax
+    ret
+
+LSTREQS:
+    movq $1, %rax
     ret
